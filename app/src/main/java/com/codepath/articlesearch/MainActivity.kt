@@ -25,10 +25,12 @@ private const val ARTICLE_SEARCH_URL =
     "https://api.nytimes.com/svc/search/v2/articlesearch.json?api-key=${SEARCH_API_KEY}"
 
 class MainActivity : AppCompatActivity() {
+    private val articles = mutableListOf<Article>()
     private lateinit var articlesRecyclerView: RecyclerView
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -36,7 +38,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(view)
 
         articlesRecyclerView = findViewById(R.id.articles)
-        // TODO: Set up ArticleAdapter with articles
+        val articleAdapter = ArticleAdapter(this, articles)
+        articlesRecyclerView.adapter = articleAdapter
 
         articlesRecyclerView.layoutManager = LinearLayoutManager(this).also {
             val dividerItemDecoration = DividerItemDecoration(this, it.orientation)
@@ -57,11 +60,19 @@ class MainActivity : AppCompatActivity() {
             override fun onSuccess(statusCode: Int, headers: Headers, json: JSON) {
                 Log.i(TAG, "Successfully fetched articles: $json")
                 try {
-                    // TODO: Create the parsedJSON
+                    val parsedJson = createJson().decodeFromString(
+                        SearchNewsResponse.serializer(),
+                        json.jsonObject.toString()
+                    )
+                    parsedJson.response?.docs?.let { list ->
+                        articles.addAll(list)
+                    }
+                    parsedJson.response?.docs?.let { list ->
+                        articles.addAll(list)
 
-                    // TODO: Do something with the returned json (contains article information)
-
-                    // TODO: Save the articles and reload the screen
+                        // Reload the screen
+                        articleAdapter.notifyDataSetChanged()
+                    }
 
                 } catch (e: JSONException) {
                     Log.e(TAG, "Exception: $e")
